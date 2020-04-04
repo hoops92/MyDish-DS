@@ -1,0 +1,21 @@
+{% extends "main.html" %}
+{% block content %}
+<article class="flex two" style="padding: 3em 1em;">
+   <div>
+       <h1>Input Ingredients</h1>
+       <form action = "http://localhost:5000/result" method = "POST">
+           <p><input type = "text" name = "1" /></p>
+           <p><input type = "text" name = "2" /></p>
+           <p><input type = "text" name = "3" /></p>
+           <p><input type = "text" name = "4" /></p>
+           <p><input type = "text" name = "5" /></p>
+           <p><input type = "text" name = "6" /></p>
+           <p><input type = "text" name = "7" /></p>
+           <p><input type = "text" name = "8" /></p>
+           <p><input type = "text" name = "9" /></p>
+           <p><input type = "text" name = "10" /></p>
+           <p><input type = "submit" value = "submit" /></p>
+       </form>
+   </div>
+</article>
+{% endblock %}

@@ -1,0 +1,301 @@
+{% extends "main.html" %}
+{% block content %}
+        <article id="content">
+            <header>
+                <h1 class="title">Module: <code>Ingredient Prediction API</code></h1>
+            </header>
+            <section id="section-intro">
+                <details class="source">
+                    <summary>
+                        <span>Expand source code</span>
+                    </summary>
+                    <pre><code class="python">import numpy as np
+                        import json
+                        
+                        from flask import Flask, jsonify, request
+                        from tensorflow.keras.models import load_model
+                        
+                        application = Flask(__name__)
+                        
+                        with open(&#39;ingr_int.json&#39;) as json_file:
+                        ingr_int = json.load(json_file)
+                        with open(&#39;int_ingr.json&#39;) as json_file:
+                        int_ingr = json.load(json_file)
+                        
+                        my_model = load_model(&#39;baseline_pred.h5&#39;)
+                        max_pred_length = 10
+                        
+                        def sample(preds, temperature=1.0):
+                        # helper function to sample an index from a probability array
+                        preds = np.asarray(preds).astype(&#39;float64&#39;)
+                        preds = np.log(preds) / temperature
+                        exp_preds = np.exp(preds)
+                        preds = exp_preds / np.sum(exp_preds)
+                        probas = np.random.multinomial(1, preds, 1)
+                        return np.argmax(probas)
+                        
+                        def pred_next_ingr(ingr_list):
+                        
+                        pred_next = []
+                        
+                        for diversity in [0.2, 0.6, 1.2]:
+                        
+                        start_ingr = [ingr_int[x] for x in ingr_list]
+                        
+                        for i in range(10):
+                        x_pred = np.zeros((1, max_pred_length, len(ingr_int)))
+                        for t, ingr in enumerate(start_ingr):
+                        x_pred[0, t, ingr] = 1
+                        
+                        preds = my_model.predict(x_pred, verbose=0)[0]
+                        next_index = sample(preds, diversity)
+                        next_ingredient = int_ingr[str(next_index)]
+                        
+                        pred_next.append(next_ingredient)
+                        
+                        return list(set(pred_next))
+                        
+                        @application.route(&#39;/&#39;, methods=[&#39;GET&#39;])
+                        def return_conf():
+                        return &#39;aight, now what?&#39;
+                        
+                        @application.route(&#39;/pred&#39;, methods=[&#39;GET&#39;])
+                        def return_sample():
+                        
+                        sample_json = {
+                            &#34;1&#34;:&#34;butter&#34;, 
+                            &#34;2&#34;:&#34;chocolate&#34;,
+                            &#34;3&#34;:&#34;sugar&#34;
+                        }
+                        
+                        ingr_list = list(sample_json.values())
+                        next_preds = pred_next_ingr(ingr_list)
+                        
+                        next_preds = (set(next_preds) - set(ingr_list))
+                        
+                        return jsonify(list(next_preds))
+                        
+                        
+                        @application.route(&#39;/pred&#39;, methods=[&#39;POST&#39;])
+                        def return_prediction():
+                        
+                        ingr_inputs = request.get_json(force=True)
+                        ingr_inputs.update((x, y) for x, y in ingr_inputs.items())
+                        
+                        ingr_list = list(ingr_inputs.values())
+                        next_preds = pred_next_ingr(ingr_list)
+                        
+                        next_preds = (set(next_preds) - set(ingr_list))
+                        
+                        return jsonify(list(next_preds))
+                        
+                        if __name__ == &#39;__main__&#39;:
+                        application.run(debug=True, port=8000)</code></pre>
+                </details>
+            </section>
+            <section>
+            </section>
+            <section>
+            </section>
+            <section>
+                <h2 class="section-title" id="header-calls">API Calls</h2>
+                <dl>
+                    <dt id="application.root_get"><code class="name flex">
+                            <span>/ <span class="ident">['GET']</span></span>
+                        </code></dt>
+                    <dd>
+                        <section class="desc"></section>
+                        <details class="source">
+                            <summary>
+                                <span>Expand source code</span>
+                            </summary>
+                            <pre><code class="python">@application.route(&#39;/&#39;, methods=[&#39;GET&#39;])
+                                    def return_conf():
+                                    return &#39;aight, now what?&#39;</code></pre>
+                        </details>
+                    </dd>
+                    <dt id="application.return_prediction"><code class="name flex">
+                            <span>/pred <span class="ident">['GET']</span></span>
+                        </code></dt>
+                    <dd>
+                        <section class="desc"></section>
+                        <details class="source">
+                            <summary>
+                                <span>Expand source code</span>
+                            </summary>
+                            <pre><code class="python">@application.route(&#39;/pred&#39;, methods=[&#39;POST&#39;])
+                                        def return_prediction():
+                                        
+                                        ingr_inputs = request.get_json(force=True)
+                                        ingr_inputs.update((x, y) for x, y in ingr_inputs.items())
+                                        
+                                        ingr_list = list(ingr_inputs.values())
+                                        next_preds = pred_next_ingr(ingr_list)
+                                        
+                                        next_preds = (set(next_preds) - set(ingr_list))
+                                        
+                                        return jsonify(list(next_preds))</code></pre>
+                        </details>
+                    </dd>
+                    <dt id="application.return_sample"><code class="name flex">
+							<span>/pred <span class="ident">['POST']</span></span>
+                        </code></dt>
+                    <dd>
+                        <section class="desc"></section>
+                        <details class="source">
+                            <summary>
+                                <span>Expand source code</span>
+                            </summary>
+                            <pre><code class="python">@application.route(&#39;/pred&#39;, methods=[&#39;GET&#39;])
+                                            def return_sample():
+                                            
+                                            sample_json = {
+                                                &#34;1&#34;:&#34;butter&#34;, 
+                                                &#34;2&#34;:&#34;chocolate&#34;,
+                                                &#34;3&#34;:&#34;sugar&#34;
+                                            }
+                                            
+                                            ingr_list = list(sample_json.values())
+                                            next_preds = pred_next_ingr(ingr_list)
+                                            
+                                            next_preds = (set(next_preds) - set(ingr_list))
+                                            
+                                            return jsonify(list(next_preds))</code></pre>
+                        </details>
+                    </dd>
+                </dl>
+            </section>
+            <section>
+                <article id="api-User-GetUser-0.0.0" data-group="User" data-name="GetUser" data-version="0.0.0">
+                    <div class="pull-left">
+                      <h1>User - Get User information</h1>
+                    </div>
+                    <div class="clearfix"></div>
+                
+                
+                    <pre class="prettyprint language-html prettyprinted" data-type="get" style=""><code><span class="pln">/user/:id</span></code></pre>
+                
+                
+                
+                    
+                
+                    
+                      <h2>Parameter</h2>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 30%">Field</th>
+                            <th style="width: 10%">Type</th>
+                            <th style="width: 70%">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="code">id</td>
+                              <td>
+                                Number
+                              </td>
+                            <td>
+                            <p>Users unique ID.</p> 
+                            
+                            
+                                        </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                
+                
+                
+                    
+                      <h2>Success 200</h2>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 30%">Field</th>
+                            <th style="width: 10%">Type</th>
+                            <th style="width: 70%">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="code">firstname</td>
+                              <td>
+                                String
+                              </td>
+                            <td>
+                            <p>Firstname of the User.</p> 
+                            
+                            
+                                        </td>
+                          </tr>
+                          <tr>
+                            <td class="code">lastname</td>
+                              <td>
+                                String
+                              </td>
+                            <td>
+                            <p>Lastname of the User.</p> 
+                            
+                            
+                                        </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                
+                      <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active">
+                            <a href="#success-examples-User-GetUser-0_0_0-0">Success-Response:</a>
+                          </li>
+                      </ul>
+                
+                      <div class="tab-content">
+                        <div class="tab-pane active" id="success-examples-User-GetUser-0_0_0-0">
+                        <pre class="prettyprint language-json prettyprinted" data-type="json" style=""><code><span class="pln">    HTTP</span><span class="pun">/</span><span class="lit">1.1</span><span class="pln"> </span><span class="lit">200</span><span class="pln"> OK
+                    </span><span class="pun">{</span><span class="pln">
+                      </span><span class="str">"firstname"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"John"</span><span class="pun">,</span><span class="pln">
+                      </span><span class="str">"lastname"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"Doe"</span><span class="pln">
+                    </span><span class="pun">}</span></code></pre>
+                        </div>
+                      </div>
+                
+                
+                    
+                      <h2>Error 4xx</h2>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 30%">Field</th>
+                            
+                            <th style="width: 70%">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="code">UserNotFound</td>
+                            <td>
+                            <p>The <code>id</code> of the User was not found.</p> 
+                            
+                            
+                                        </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                
+                      <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active">
+                            <a href="#error-examples-User-GetUser-0_0_0-0">Error-Response:</a>
+                          </li>
+                      </ul>
+                
+                      <div class="tab-content">
+                        <div class="tab-pane active" id="error-examples-User-GetUser-0_0_0-0">
+                        <pre class="prettyprint language-json prettyprinted" data-type="json" style=""><code><span class="pln">    HTTP</span><span class="pun">/</span><span class="lit">1.1</span><span class="pln"> </span><span class="lit">404</span><span class="pln"> </span><span class="typ">Not</span><span class="pln"> </span><span class="typ">Found</span><span class="pln">
+                    </span><span class="pun">{</span><span class="pln">
+                      </span><span class="str">"error"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"UserNotFound"</span><span class="pln">
+                    </span><span class="pun">}</span></code></pre>
+                        </div>
+                      </div>
+                  </article>
+            </section>
+        </article>
+{% endblock %}
